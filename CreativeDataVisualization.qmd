@@ -1,0 +1,84 @@
+---
+title: "SpiralMaze"
+format: html
+editor: visual
+---
+
+## Creative Data Visualization
+
+```{r}
+library(ggplot2)
+library(readxl)
+library(dplyr)
+
+setwd("C:/Users/britt/OneDrive/Documents/ADA/CreativeDataVisualization")
+
+
+# Load the Excel file (make sure this file is in the same folder)
+detour_data <- read_excel("detour_data.xlsx")
+
+# Clean column names if needed
+colnames(detour_data) <- c("Treatment", "SolveTime")
+
+# Drop any missing values
+detour_data <- na.omit(detour_data)
+
+# Normalize solve time and create spiral coordinates
+detour_data <- detour_data %>%
+  mutate(
+    normalized_solve = SolveTime / max(SolveTime, na.rm = TRUE),
+    angle = seq(0, 6 * pi, length.out = n())
+  ) %>%
+  mutate(
+    r = normalized_solve * 10,
+    x = r * cos(angle),
+    y = r * sin(angle)
+  )
+
+```
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+
+spiral_base <- tibble(
+  angle = seq(0, 6 * pi, length.out = 1000),
+  radius = seq(0, 10, length.out = 1000),
+  x = radius * cos(angle),
+  y = radius * sin(angle)
+)
+
+
+treatment_colors <- c(
+  "C" = "#1f77b4",
+  "CP" = "#ff7f0e",
+  "Ct" = "#2ca02c",
+  "CtP" = "#d62728",
+  "M" = "#9467bd",
+  "MP" = "#8c564b"
+)
+
+
+ggplot() +
+  geom_path(data = spiral_base, aes(x = x, y = y), color = "gray80", linetype = "dashed", linewidth = 1.2) +
+  geom_point(data = detour_data, aes(x = x, y = y, color = Treatment), size = 3, alpha = 0.9) +
+  scale_color_manual(values = treatment_colors, name = "Treatment Group",
+                     labels = c("C (Courting)", "CP (Courting + Predation)", "Ct (Coercive)",
+                                "CtP (Coercive + Predation)", "M (Mixed)", "MP (Mixed + Predation)")) +
+  coord_equal() +
+  theme_void() +
+  ggtitle("Spiral Maze of Detour Task Solve Times") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10)
+  )
+
+```
+
+This spiral maze plot visualizes solve times from a detour-learning task in female *Xiphophorus nigrensis* fish, grouped by six different social and ecological treatments: **C** (Courting), **CP** (Courting + Predation), **Ct** (Coercive), **CtP** (Coercive + Predation), **M** (Mixed), and **MP** (Mixed + Predation). Each point represents one fish, with its distance from the center reflecting its **solve time normalized to the group maximum**. Longer solve times are positioned further outward along a spiral path, symbolizing a more circuitous route to solving the task.
+
+Colors represent treatment groups, and a light gray dashed spiral provides spatial reference for interpretation. This visualization was generated entirely in RStudio using ggplot2 and dplyr. Coordinates were calculated from polar angle and scaled radius values, allowing behavioral performance to be intuitively mapped as distance and direction in space. The result is a metaphorical "maze" that captures how predation and social complexity shape navigational decisions and task performance.
